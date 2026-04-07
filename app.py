@@ -58,3 +58,51 @@ def init_db():
     conn.close()
 
 init_db()
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("INSERT INTO users (username, password) VALUES (?,?)",
+                           (username, password)
+                           )
+            conn.commit()
+            conn.close()
+            return redirect(url_for("login"))
+        
+        except:
+            conn.close()
+            return "Username already exists"
+
+    return render_template("signup.html") 
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            "SELECT * FROM users WHERE username=? AND password=?",
+            (username, password)
+        )
+
+        user = cursor.fetchone()
+        conn.close()
+
+        if user:
+            session["user_id"] = user[0]
+            return redirect(url_for("dashboard"))
+        else:
+            return "Invalid username or password"
+        
+    return render_template("login.html")
